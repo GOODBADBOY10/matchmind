@@ -8,6 +8,7 @@ import { useGame } from "./lib/useGame";
 import { useScores } from "./lib/useScores";
 import { useAppStore } from "./lib/store";
 import { ShareButton } from "./components/ShareButton";
+import { StreakBadge } from "./components/StreakBadge";
 
 export default function Home() {
   const { jwt } = useAppStore();
@@ -194,10 +195,10 @@ export default function Home() {
                   <span>🟨 <span className="font-bold text-white">{scores.total.YellowCards}</span> <span className="text-gray-500">cards</span></span>
                 </div>
                 <span className={`text-xs font-bold px-2 py-1 rounded-full ${isLive
-                    ? "bg-green-400/20 text-green-400"
-                    : isFinished
-                      ? "bg-blue-400/20 text-blue-400"
-                      : "bg-gray-800 text-gray-400"
+                  ? "bg-green-400/20 text-green-400"
+                  : isFinished
+                    ? "bg-blue-400/20 text-blue-400"
+                    : "bg-gray-800 text-gray-400"
                   }`}>
                   {isLive ? "🔴 Live" : isFinished ? "✓ Finished" : "Upcoming"}
                 </span>
@@ -231,6 +232,7 @@ export default function Home() {
                 <p className="text-gray-500 text-xs mt-1">Best Streak</p>
               </div>
             </div>
+            <StreakBadge streak={streak} bestStreak={bestStreak} />
             <ShareButton
               streak={streak}
               bestStreak={bestStreak}
