@@ -64,7 +64,12 @@ export function useScores(fixtureId: number | null) {
 
       const latest = best;
       const score = latest.Score ?? latest.scoreSoccer;
-      const gameState = latest.GameState ?? latest.gameState ?? "NS";
+      // const gameState = latest.GameState ?? latest.gameState ?? "NS";
+      const startTime = latest.StartTime ?? 0;
+      const now = Date.now();
+      // World Cup matches last ~2 hours (7200000ms)
+      const matchEndTime = startTime + 7200000;
+      const gameState = now < startTime ? "upcoming" : now > matchEndTime ? "finished" : "live";
       const minute = latest.Clock?.Seconds
         ? Math.floor(latest.Clock.Seconds / 60)
         : 0;

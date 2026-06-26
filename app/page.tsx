@@ -25,16 +25,13 @@ export default function Home() {
     makeGuess,
     resolveRound,
     nextRound,
+    resetGame,
   } = useGame(fixtures);
-
 
   const { scores, refetch } = useScores(selectedFixture?.FixtureId ?? null);
 
-
   useEffect(() => {
-    console.log("useEffect fired — gameStarted:", gameStarted, "scores:", scores, "round:", round);
     if (gameStarted && selectedFixture && scores && !round) {
-      console.log("Starting round with scores:", scores);
       const statType = ["corners", "goals", "yellowCards"][
         Math.floor(Math.random() * 3)
       ] as "corners" | "goals" | "yellowCards";
@@ -43,15 +40,18 @@ export default function Home() {
         goals: scores.total.Goals,
         yellowCards: scores.total.YellowCards,
       };
-      console.log("statMap:", statMap, "chosen statType:", statType, "value:", statMap[statType]);
       startRound(selectedFixture, statMap[statType]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scores]);
 
-  const handleSelectFixture = async (fixture: Fixture) => {
-    setSelectedFixture(fixture);
-    setGameStarted(true);
+  const handleSelectFixture = (fixture: Fixture) => {
+    setSelectedFixture(null);
+    resetGame();
+    setTimeout(() => {
+      setSelectedFixture(fixture);
+      setGameStarted(true);
+    }, 100);
   };
 
   const handleGuess = (guess: "higher" | "lower") => {
@@ -75,7 +75,15 @@ export default function Home() {
   const handleBack = () => {
     setGameStarted(false);
     setSelectedFixture(null);
+    resetGame();
   };
+
+  // const isLive = scores &&
+  //   scores.gameState !== "scheduled" &&
+  //   scores.gameState !== "NS";
+
+  const isLive = scores?.gameState === "live";
+  const isFinished = scores?.gameState === "finished";
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -185,12 +193,13 @@ export default function Home() {
                   <span>🚩 <span className="font-bold text-white">{scores.total.Corners}</span> <span className="text-gray-500">corners</span></span>
                   <span>🟨 <span className="font-bold text-white">{scores.total.YellowCards}</span> <span className="text-gray-500">cards</span></span>
                 </div>
-                <span className={`text-xs font-bold px-2 py-1 rounded-full ${scores.gameState === "scheduled"
-                  ? "bg-gray-800 text-gray-400"
-                  : "bg-green-400/20 text-green-400"
+                <span className={`text-xs font-bold px-2 py-1 rounded-full ${isLive
+                    ? "bg-green-400/20 text-green-400"
+                    : isFinished
+                      ? "bg-blue-400/20 text-blue-400"
+                      : "bg-gray-800 text-gray-400"
                   }`}>
-                  {scores.gameState === "scheduled" && scores.total.Goals === 0 && scores.total.Corners === 0 && scores.total.YellowCards === 0 ? "Upcoming" : "🔴 Live"}
-                  {/* {scores.gameState === "scheduled" ? "Upcoming" : "🔴 Live"} */}
+                  {isLive ? "🔴 Live" : isFinished ? "✓ Finished" : "Upcoming"}
                 </span>
               </div>
             )}
@@ -228,8 +237,6 @@ export default function Home() {
               totalGuesses={totalGuesses}
               correctGuesses={correctGuesses}
             />
-
-
           </div>
         )}
       </div>
@@ -238,7 +245,6 @@ export default function Home() {
       <footer className="border-t border-white/5 py-6 text-center text-gray-600 text-xs">
         Powered by TxLINE · Built on Solana
       </footer>
-
     </main>
   );
 }

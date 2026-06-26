@@ -107,5 +107,6 @@ export function useGame(fixtures: Fixture[]) {
         makeGuess,
         resolveRound,
         nextRound,
+        resetGame: () => setRound(null),
     };
 }
