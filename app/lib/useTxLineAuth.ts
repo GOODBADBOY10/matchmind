@@ -92,12 +92,6 @@ export function useTxLineAuth() {
                 true,
                 TOKEN_2022_PROGRAM_ID
             );
-            // const userTokenAccount = getAssociatedTokenAddressSync(
-            //     TXL_MINT,
-            //     publicKey,
-            //     false,
-            //     TOKEN_2022_PROGRAM_ID
-            // );
 
             const userTokenAccount = getAssociatedTokenAddressSync(
                 TXL_MINT,
@@ -152,12 +146,21 @@ export function useTxLineAuth() {
                 })
                 .transaction();
 
-            // const txSig = await sendTransaction(tx, connection, {
-            //     skipPreflight: false,
-            // });
 
-            // setStep("Confirming transaction...");
-            // await connection.confirmTransaction(txSig, "confirmed");
+            // let txSig: string;
+            // try {
+            //     txSig = await sendTransaction(tx, connection, {
+            //         skipPreflight: true,
+            //     });
+            //     setStep("Confirming transaction...");
+            //     const confirmation = await connection.confirmTransaction(txSig, "confirmed");
+            //     if (confirmation.value.err) {
+            //         throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+            //     }
+            // } catch (txError: unknown) {
+            //     const msg = txError instanceof Error ? txError.message : String(txError);
+            //     throw new Error(`On-chain subscription failed: ${msg}`);
+            // }
 
             let txSig: string;
             try {
@@ -167,11 +170,20 @@ export function useTxLineAuth() {
                 setStep("Confirming transaction...");
                 const confirmation = await connection.confirmTransaction(txSig, "confirmed");
                 if (confirmation.value.err) {
-                    throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+                    const errStr = JSON.stringify(confirmation.value.err);
+                    // 3012 = already subscribed — that's fine, use this txSig anyway
+                    if (!errStr.includes("3012")) {
+                        throw new Error(`Transaction failed: ${errStr}`);
+                    }
                 }
             } catch (txError: unknown) {
                 const msg = txError instanceof Error ? txError.message : String(txError);
-                throw new Error(`On-chain subscription failed: ${msg}`);
+                // If already subscribed or timeout, try to activate anyway
+                if (msg.includes("3012") || msg.includes("not confirmed") || msg.includes("30.00 seconds")) {
+                    txSig = "existing_subscription";
+                } else {
+                    throw new Error(`On-chain subscription failed: ${msg}`);
+                }
             }
 
             // Step 4: Sign activation message
