@@ -58,7 +58,7 @@ export function ConnectButton() {
           <span className="text-gray-400 text-xs font-mono">{shortAddress}</span>
           <button
             onClick={disconnect}
-            className="text-gray-600 hover:text-red-400 text-xs transition-all"
+            className="text-gray-600 cursor-pointer hover:text-red-400 text-xs transition-all"
           >
             Disconnect
           </button>

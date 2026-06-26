@@ -9,6 +9,7 @@ import { useScores } from "./lib/useScores";
 import { useAppStore } from "./lib/store";
 import { ShareButton } from "./components/ShareButton";
 import { StreakBadge } from "./components/StreakBadge";
+import { ProBanner } from "./components/ProBanner";
 
 export default function Home() {
   const { jwt } = useAppStore();
@@ -233,6 +234,7 @@ export default function Home() {
               </div>
             </div>
             <StreakBadge streak={streak} bestStreak={bestStreak} />
+            <ProBanner totalGuesses={totalGuesses} />
             <ShareButton
               streak={streak}
               bestStreak={bestStreak}
