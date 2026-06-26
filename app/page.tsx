@@ -1,65 +1,244 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import { ConnectButton } from "./components/ConnectButton";
+import { GameCard } from "./components/GameCard";
+import { useFixtures, Fixture } from "./lib/useFixtures";
+import { useGame } from "./lib/useGame";
+import { useScores } from "./lib/useScores";
+import { useAppStore } from "./lib/store";
+import { ShareButton } from "./components/ShareButton";
 
 export default function Home() {
+  const { jwt } = useAppStore();
+  const { fixtures, loading } = useFixtures();
+  const [gameStarted, setGameStarted] = useState(false);
+  const [selectedFixture, setSelectedFixture] = useState<Fixture | null>(null);
+
+  const {
+    round,
+    streak,
+    bestStreak,
+    totalGuesses,
+    correctGuesses,
+    startRound,
+    makeGuess,
+    resolveRound,
+    nextRound,
+  } = useGame(fixtures);
+
+
+  const { scores, refetch } = useScores(selectedFixture?.FixtureId ?? null);
+
+
+  useEffect(() => {
+    console.log("useEffect fired — gameStarted:", gameStarted, "scores:", scores, "round:", round);
+    if (gameStarted && selectedFixture && scores && !round) {
+      console.log("Starting round with scores:", scores);
+      const statType = ["corners", "goals", "yellowCards"][
+        Math.floor(Math.random() * 3)
+      ] as "corners" | "goals" | "yellowCards";
+      const statMap = {
+        corners: scores.total.Corners,
+        goals: scores.total.Goals,
+        yellowCards: scores.total.YellowCards,
+      };
+      console.log("statMap:", statMap, "chosen statType:", statType, "value:", statMap[statType]);
+      startRound(selectedFixture, statMap[statType]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scores]);
+
+  const handleSelectFixture = async (fixture: Fixture) => {
+    setSelectedFixture(fixture);
+    setGameStarted(true);
+  };
+
+  const handleGuess = (guess: "higher" | "lower") => {
+    makeGuess(guess);
+    setTimeout(async () => {
+      const freshScores = await refetch();
+      if (freshScores && round) {
+        const statMap: Record<string, number> = {
+          corners: freshScores.total.Corners,
+          goals: freshScores.total.Goals,
+          yellowCards: freshScores.total.YellowCards,
+        };
+        const newValue = statMap[round.statType] ?? Math.floor(Math.random() * 10);
+        resolveRound(guess, newValue);
+      } else {
+        resolveRound(guess, Math.floor(Math.random() * 10));
+      }
+    }, 3000);
+  };
+
+  const handleBack = () => {
+    setGameStarted(false);
+    setSelectedFixture(null);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen bg-black text-white">
+      {/* Navbar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/5 px-4 py-3">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <h1 className="text-xl font-black tracking-tight">
+            Match<span className="text-green-400">Mind</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+          <ConnectButton />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </nav>
+
+      {/* Main content */}
+      <div className="max-w-6xl mx-auto px-4 pt-24 pb-12">
+
+        {/* Hero — shown when not connected */}
+        {!jwt && (
+          <div className="flex flex-col items-center justify-center min-h-[80vh] gap-8 text-center animate-fadeIn">
+            <div className="inline-flex items-center gap-2 bg-green-400/10 border border-green-400/20 text-green-400 text-xs font-semibold px-4 py-2 rounded-full">
+              ⚽ World Cup 2026 · Live Data
+            </div>
+            <div>
+              <h2 className="text-5xl sm:text-7xl font-black tracking-tight mb-4 leading-none">
+                Predict.<br />
+                <span className="text-green-400">Streak.</span><br />
+                Win.
+              </h2>
+              <p className="text-gray-400 text-lg sm:text-xl max-w-md mx-auto">
+                Guess if live World Cup stats go higher or lower.
+                Powered by real-time TxLINE data on Solana.
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-6 text-center">
+              <div className="bg-gray-900 rounded-2xl px-6 py-4">
+                <p className="text-3xl font-black text-green-400">104</p>
+                <p className="text-gray-500 text-sm mt-1">Matches</p>
+              </div>
+              <div className="bg-gray-900 rounded-2xl px-6 py-4">
+                <p className="text-3xl font-black text-green-400">Live</p>
+                <p className="text-gray-500 text-sm mt-1">Real-Time Data</p>
+              </div>
+              <div className="bg-gray-900 rounded-2xl px-6 py-4">
+                <p className="text-3xl font-black text-green-400">Free</p>
+                <p className="text-gray-500 text-sm mt-1">To Play</p>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm">
+              Connect your Solana wallet to start playing
+            </p>
+          </div>
+        )}
+
+        {/* Fixture picker */}
+        {jwt && !gameStarted && (
+          <div className="animate-fadeIn">
+            <div className="mb-8">
+              <h2 className="text-3xl font-black mb-2">Pick a Match</h2>
+              <p className="text-gray-500">Choose a World Cup fixture to predict</p>
+            </div>
+            {loading && (
+              <div className="flex flex-col gap-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="bg-gray-900 rounded-2xl p-5 animate-pulse h-20" />
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {fixtures.slice(0, 12).map((f) => (
+                <button
+                  key={f.FixtureId}
+                  onClick={() => handleSelectFixture(f)}
+                  className="bg-gray-900 hover:bg-gray-800 cursor-pointer border border-white/5 hover:border-green-400/30 rounded-2xl p-5 flex flex-col gap-2 transition-all text-left group"
+                >
+                  <p className="text-xs text-gray-500 uppercase tracking-widest">
+                    {f.Competition}
+                  </p>
+                  <p className="font-bold text-white group-hover:text-green-400 transition-colors">
+                    {f.Participant1}
+                  </p>
+                  <p className="text-gray-500 text-sm">vs</p>
+                  <p className="font-bold text-white group-hover:text-green-400 transition-colors">
+                    {f.Participant2}
+                  </p>
+                  <span className="text-green-400 text-xs mt-1">Play →</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Game */}
+        {jwt && gameStarted && round && (
+          <div className="animate-fadeIn max-w-lg mx-auto">
+            <button
+              onClick={handleBack}
+              className="text-gray-500 hover:text-white text-sm transition-all mb-6 flex items-center gap-2"
+            >
+              ← Back to matches
+            </button>
+
+            {/* Live stats bar */}
+            {scores && (
+              <div className="bg-gray-900 border border-white/5 rounded-2xl p-4 mb-4 flex flex-wrap justify-between items-center gap-2">
+                <div className="flex gap-4 text-sm">
+                  <span>⚽ <span className="font-bold text-white">{scores.total.Goals}</span> <span className="text-gray-500">goals</span></span>
+                  <span>🚩 <span className="font-bold text-white">{scores.total.Corners}</span> <span className="text-gray-500">corners</span></span>
+                  <span>🟨 <span className="font-bold text-white">{scores.total.YellowCards}</span> <span className="text-gray-500">cards</span></span>
+                </div>
+                <span className={`text-xs font-bold px-2 py-1 rounded-full ${scores.gameState === "scheduled"
+                  ? "bg-gray-800 text-gray-400"
+                  : "bg-green-400/20 text-green-400"
+                  }`}>
+                  {scores.gameState === "scheduled" && scores.total.Goals === 0 && scores.total.Corners === 0 && scores.total.YellowCards === 0 ? "Upcoming" : "🔴 Live"}
+                  {/* {scores.gameState === "scheduled" ? "Upcoming" : "🔴 Live"} */}
+                </span>
+              </div>
+            )}
+
+            <GameCard
+              round={round}
+              streak={streak}
+              bestStreak={bestStreak}
+              onGuess={handleGuess}
+              onNext={nextRound}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+            {/* Stats bar */}
+            <div className="mt-6 grid grid-cols-3 gap-3 text-center">
+              <div className="bg-gray-900 rounded-2xl p-4">
+                <p className="text-2xl font-black text-white">{totalGuesses}</p>
+                <p className="text-gray-500 text-xs mt-1">Guesses</p>
+              </div>
+              <div className="bg-gray-900 rounded-2xl p-4">
+                <p className="text-2xl font-black text-green-400">
+                  {totalGuesses > 0
+                    ? Math.round((correctGuesses / totalGuesses) * 100)
+                    : 0}%
+                </p>
+                <p className="text-gray-500 text-xs mt-1">Accuracy</p>
+              </div>
+              <div className="bg-gray-900 rounded-2xl p-4">
+                <p className="text-2xl font-black text-yellow-400">{bestStreak}</p>
+                <p className="text-gray-500 text-xs mt-1">Best Streak</p>
+              </div>
+            </div>
+            <ShareButton
+              streak={streak}
+              bestStreak={bestStreak}
+              totalGuesses={totalGuesses}
+              correctGuesses={correctGuesses}
+            />
+
+
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <footer className="border-t border-white/5 py-6 text-center text-gray-600 text-xs">
+        Powered by TxLINE · Built on Solana
+      </footer>
+
+    </main>
   );
 }
