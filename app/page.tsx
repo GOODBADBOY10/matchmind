@@ -17,6 +17,30 @@ export default function Home() {
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedFixture, setSelectedFixture] = useState<Fixture | null>(null);
 
+  type FilterType = "all" | "live" | "upcoming" | "finished";
+  const [filter, setFilter] = useState<FilterType>("all");
+
+  const sortedFixtures = [...fixtures].sort((a, b) => {
+    const now = Date.now();
+    const getStatus = (f: Fixture) => {
+      const matchEnd = f.StartTime + 7200000;
+      if (now >= f.StartTime && now <= matchEnd) return 0; // live first
+      if (now < f.StartTime) return 1; // upcoming second
+      return 2; // finished last
+    };
+    return getStatus(a) - getStatus(b);
+  });
+
+  const filteredFixtures = sortedFixtures.filter((f) => {
+    if (filter === "all") return true;
+    const now = Date.now();
+    const matchEnd = f.StartTime + 7200000;
+    if (filter === "live") return now >= f.StartTime && now <= matchEnd;
+    if (filter === "upcoming") return now < f.StartTime;
+    if (filter === "finished") return now > matchEnd;
+    return true;
+  });
+
   const {
     round,
     streak,
@@ -88,10 +112,6 @@ export default function Home() {
     resetGame();
   };
 
-  // const isLive = scores &&
-  //   scores.gameState !== "scheduled" &&
-  //   scores.gameState !== "NS";
-
   const isLive = scores?.gameState === "live";
   const isFinished = scores?.gameState === "finished";
 
@@ -150,38 +170,78 @@ export default function Home() {
         {/* Fixture picker */}
         {jwt && !gameStarted && (
           <div className="animate-fadeIn">
-            <div className="mb-8">
+            <div className="mb-6">
               <h2 className="text-3xl font-black mb-2">Pick a Match</h2>
               <p className="text-gray-500">Choose a World Cup fixture to predict</p>
             </div>
-            {loading && (
-              <div className="flex flex-col gap-3">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="bg-gray-900 rounded-2xl p-5 animate-pulse h-20" />
-                ))}
-              </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {fixtures.slice(0, 12).map((f) => (
+
+            {/* Filter tabs */}
+            <div className="flex gap-2 mb-6">
+              {(["all", "live", "upcoming", "finished"] as const).map((f) => (
                 <button
-                  key={f.FixtureId}
-                  onClick={() => handleSelectFixture(f)}
-                  className="bg-gray-900 hover:bg-gray-800 cursor-pointer border border-white/5 hover:border-green-400/30 rounded-2xl p-5 flex flex-col gap-2 transition-all text-left group"
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all capitalize ${filter === f
+                    ? "bg-green-400 text-black"
+                    : "bg-gray-900 text-gray-400 hover:text-white border border-white/5"
+                    }`}
                 >
-                  <p className="text-xs text-gray-500 uppercase tracking-widest">
-                    {f.Competition}
-                  </p>
-                  <p className="font-bold text-white group-hover:text-green-400 transition-colors">
-                    {f.Participant1}
-                  </p>
-                  <p className="text-gray-500 text-sm">vs</p>
-                  <p className="font-bold text-white group-hover:text-green-400 transition-colors">
-                    {f.Participant2}
-                  </p>
-                  <span className="text-green-400 text-xs mt-1">Play →</span>
+                  {f === "live" ? "🔴 Live" : f === "upcoming" ? "⏳ Upcoming" : f === "finished" ? "✓ Finished" : "All"}
                 </button>
               ))}
             </div>
+
+            {loading && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="bg-gray-900 rounded-2xl p-5 animate-pulse h-32" />
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {filteredFixtures.map((f) => {
+                const now = Date.now();
+                const matchEnd = f.StartTime + 7200000;
+                const status = now < f.StartTime ? "upcoming" : now > matchEnd ? "finished" : "live";
+
+                return (
+                  <button
+                    key={f.FixtureId}
+                    onClick={() => handleSelectFixture(f)}
+                    className="bg-gray-900 hover:bg-gray-800 cursor-pointer border border-white/5 hover:border-green-400/30 rounded-2xl p-5 flex flex-col gap-2 transition-all text-left group"
+                  >
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-gray-500 uppercase tracking-widest">
+                        {f.Competition}
+                      </p>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${status === "live"
+                        ? "bg-green-400/20 text-green-400"
+                        : status === "finished"
+                          ? "bg-blue-400/20 text-blue-400"
+                          : "bg-gray-800 text-gray-500"
+                        }`}>
+                        {status === "live" ? "🔴 Live" : status === "finished" ? "✓ Done" : "⏳"}
+                      </span>
+                    </div>
+                    <p className="font-bold text-white group-hover:text-green-400 transition-colors">
+                      {f.Participant1}
+                    </p>
+                    <p className="text-gray-500 text-sm">vs</p>
+                    <p className="font-bold text-white group-hover:text-green-400 transition-colors">
+                      {f.Participant2}
+                    </p>
+                    <span className="text-green-400 text-xs mt-1">Play →</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {filteredFixtures.length === 0 && !loading && (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No {filter} matches right now</p>
+              </div>
+            )}
           </div>
         )}
 
