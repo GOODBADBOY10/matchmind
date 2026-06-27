@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface AuthState {
   jwt: string | null;
@@ -33,39 +34,48 @@ interface AppState extends AuthState, GameState {
   setFixtures: (fixtures: Fixture[]) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  // Auth
-  jwt: null,
-  apiToken: null,
-  setAuth: (jwt, apiToken) => set({ jwt, apiToken }),
-  clearAuth: () => set({ jwt: null, apiToken: null }),
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      // Auth
+      jwt: null,
+      apiToken: null,
+      setAuth: (jwt, apiToken) => set({ jwt, apiToken }),
+      clearAuth: () => set({ jwt: null, apiToken: null }),
 
-  // Fixtures
-  fixtures: [],
-  setFixtures: (fixtures) => set({ fixtures }),
+      // Fixtures
+      fixtures: [],
+      setFixtures: (fixtures) => set({ fixtures }),
 
-  // Game
-  currentFixtureId: null,
-  streak: 0,
-  totalGuesses: 0,
-  correctGuesses: 0,
-  lastResult: null,
-  setCurrentFixture: (id) => set({ currentFixtureId: id }),
-  recordGuess: (correct) =>
-    set((state) => ({
-      streak: correct ? state.streak + 1 : 0,
-      totalGuesses: state.totalGuesses + 1,
-      correctGuesses: correct
-        ? state.correctGuesses + 1
-        : state.correctGuesses,
-      lastResult: correct ? "correct" : "wrong",
-    })),
-  resetGame: () =>
-    set({
+      // Game
       currentFixtureId: null,
       streak: 0,
       totalGuesses: 0,
       correctGuesses: 0,
       lastResult: null,
+      setCurrentFixture: (id) => set({ currentFixtureId: id }),
+      recordGuess: (correct) =>
+        set((state) => ({
+          streak: correct ? state.streak + 1 : 0,
+          totalGuesses: state.totalGuesses + 1,
+          correctGuesses: correct ? state.correctGuesses + 1 : state.correctGuesses,
+          lastResult: correct ? "correct" : "wrong",
+        })),
+      resetGame: () =>
+        set({
+          currentFixtureId: null,
+          streak: 0,
+          totalGuesses: 0,
+          correctGuesses: 0,
+          lastResult: null,
+        }),
     }),
-}));
+    {
+      name: "matchmind-auth",
+      partialState: (state) => ({
+        jwt: state.jwt,
+        apiToken: state.apiToken,
+      }),
+    } as never
+  )
+);
