@@ -15,6 +15,7 @@ export default function Home() {
   const { jwt } = useAppStore();
   const { fixtures, loading } = useFixtures();
   const [gameStarted, setGameStarted] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(12);
   const [selectedFixture, setSelectedFixture] = useState<Fixture | null>(null);
 
   type FilterType = "all" | "live" | "upcoming" | "finished";
@@ -180,7 +181,7 @@ export default function Home() {
               {(["all", "live", "upcoming", "finished"] as const).map((f) => (
                 <button
                   key={f}
-                  onClick={() => setFilter(f)}
+                  onClick={() => { setFilter(f); setVisibleCount(12); }}
                   className={`px-4 py-2 rounded-full text-xs font-bold transition-all capitalize ${filter === f
                     ? "bg-green-400 text-black"
                     : "bg-gray-900 text-gray-400 hover:text-white border border-white/5"
@@ -200,7 +201,7 @@ export default function Home() {
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {filteredFixtures.map((f) => {
+              {filteredFixtures.slice(0, visibleCount).map((f) => {
                 const now = Date.now();
                 const matchEnd = f.StartTime + 7200000;
                 const status = now < f.StartTime ? "upcoming" : now > matchEnd ? "finished" : "live";
@@ -241,6 +242,15 @@ export default function Home() {
               <div className="text-center py-12">
                 <p className="text-gray-500">No {filter} matches right now</p>
               </div>
+            )}
+
+            {filteredFixtures.length > visibleCount && (
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 12)}
+                className="w-full mt-4 bg-gray-900 hover:bg-gray-800 border border-white/5 text-gray-400 hover:text-white font-bold py-4 rounded-2xl transition-all"
+              >
+                Load More ({filteredFixtures.length - visibleCount} remaining)
+              </button>
             )}
           </div>
         )}
