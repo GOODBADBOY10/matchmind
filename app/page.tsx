@@ -266,31 +266,6 @@ export default function Home() {
             </button>
 
             {/* Live stats bar */}
-            {/* {scores && (
-              <div className="bg-gray-900 border border-white/5 rounded-2xl p-4 mb-4 flex flex-wrap justify-between items-center gap-2">
-                <div className="flex flex-wrap gap-3 text-sm">
-                  <span>⚽ <span className="font-bold text-white">{scores.total.Goals}</span> <span className="text-gray-500">goals</span></span>
-                  <span>🚩 <span className="font-bold text-white">{scores.total.Corners}</span> <span className="text-gray-500">corners</span></span>
-                  <span>🟨 <span className="font-bold text-white">{scores.total.YellowCards}</span> <span className="text-gray-500">cards</span></span>
-                  {scores.total.RedCards > 0 && (
-                    <span>🟥 <span className="font-bold text-white">{scores.total.RedCards}</span> <span className="text-gray-500">red</span></span>
-                  )}
-                  {scores.minute > 0 && (
-                    <span>⏱️ <span className="font-bold text-white">{scores.minute}</span><span className="text-gray-500">'</span></span>
-                  )}
-                </div>
-                <span className={`text-xs font-bold px-2 py-1 rounded-full ${isLive
-                  ? "bg-green-400/20 text-green-400"
-                  : isFinished
-                    ? "bg-blue-400/20 text-blue-400"
-                    : "bg-gray-800 text-gray-400"
-                  }`}>
-                  {isLive ? "🔴 Live" : isFinished ? "✓ Finished" : "Upcoming"}
-                </span>
-              </div>
-            )} */}
-
-            {/* Live stats bar */}
             {scores && round && (
               <div className="bg-gray-900 border border-white/5 rounded-2xl p-4 mb-4 flex flex-col gap-3">
                 {/* Match header */}
