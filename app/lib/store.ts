@@ -72,10 +72,10 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "matchmind-auth",
-      partialState: (state) => ({
+      partialize: (state: AppState) => ({
         jwt: state.jwt,
         apiToken: state.apiToken,
       }),
-    } as never
+    }
   )
 );
