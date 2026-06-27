@@ -66,10 +66,18 @@ export default function Home() {
           goals: freshScores.total.Goals,
           yellowCards: freshScores.total.YellowCards,
         };
-        const newValue = statMap[round.statType] ?? Math.floor(Math.random() * 10);
-        resolveRound(guess, newValue);
+        const newValue = statMap[round.statType] ?? 0;
+        // If match not started yet, use random to keep game fun
+        const isUpcoming = freshScores.gameState === "upcoming" ||
+          (freshScores.total.Goals === 0 &&
+            freshScores.total.Corners === 0 &&
+            freshScores.total.YellowCards === 0);
+        const resolvedValue = isUpcoming
+          ? Math.floor(Math.random() * 8)
+          : newValue;
+        resolveRound(guess, resolvedValue);
       } else {
-        resolveRound(guess, Math.floor(Math.random() * 10));
+        resolveRound(guess, Math.floor(Math.random() * 8));
       }
     }, 3000);
   };
