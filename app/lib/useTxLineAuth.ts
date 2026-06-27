@@ -147,21 +147,6 @@ export function useTxLineAuth() {
                 .transaction();
 
 
-            // let txSig: string;
-            // try {
-            //     txSig = await sendTransaction(tx, connection, {
-            //         skipPreflight: true,
-            //     });
-            //     setStep("Confirming transaction...");
-            //     const confirmation = await connection.confirmTransaction(txSig, "confirmed");
-            //     if (confirmation.value.err) {
-            //         throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
-            //     }
-            // } catch (txError: unknown) {
-            //     const msg = txError instanceof Error ? txError.message : String(txError);
-            //     throw new Error(`On-chain subscription failed: ${msg}`);
-            // }
-
             let txSig: string;
             try {
                 txSig = await sendTransaction(tx, connection, {
@@ -195,14 +180,11 @@ export function useTxLineAuth() {
 
             // Step 5: Activate API token
             setStep("Activating API access...");
-            // const activationResponse = await axios.post(
-            //     `${BASE_URL}/api/token/activate`,
-            //     { txSig, walletSignature, leagues: [] },
-            //     { headers: { Authorization: `Bearer ${jwt}` } }
-            // );
-            // const apiToken = activationResponse.data.token || activationResponse.data;
 
             const apiToken = await activateApiToken(txSig, walletSignature, jwt);
+            if (!apiToken || apiToken.includes("Could not") || apiToken.includes("error")) {
+                throw new Error("Failed to activate API token. Please try again.");
+            }
 
             setAuth(jwt, apiToken);
             setStep("Done!");
