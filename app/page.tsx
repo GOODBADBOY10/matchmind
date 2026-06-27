@@ -266,12 +266,18 @@ export default function Home() {
             </button>
 
             {/* Live stats bar */}
-            {scores && (
+            {/* {scores && (
               <div className="bg-gray-900 border border-white/5 rounded-2xl p-4 mb-4 flex flex-wrap justify-between items-center gap-2">
-                <div className="flex gap-4 text-sm">
+                <div className="flex flex-wrap gap-3 text-sm">
                   <span>⚽ <span className="font-bold text-white">{scores.total.Goals}</span> <span className="text-gray-500">goals</span></span>
                   <span>🚩 <span className="font-bold text-white">{scores.total.Corners}</span> <span className="text-gray-500">corners</span></span>
                   <span>🟨 <span className="font-bold text-white">{scores.total.YellowCards}</span> <span className="text-gray-500">cards</span></span>
+                  {scores.total.RedCards > 0 && (
+                    <span>🟥 <span className="font-bold text-white">{scores.total.RedCards}</span> <span className="text-gray-500">red</span></span>
+                  )}
+                  {scores.minute > 0 && (
+                    <span>⏱️ <span className="font-bold text-white">{scores.minute}</span><span className="text-gray-500">'</span></span>
+                  )}
                 </div>
                 <span className={`text-xs font-bold px-2 py-1 rounded-full ${isLive
                   ? "bg-green-400/20 text-green-400"
@@ -281,6 +287,59 @@ export default function Home() {
                   }`}>
                   {isLive ? "🔴 Live" : isFinished ? "✓ Finished" : "Upcoming"}
                 </span>
+              </div>
+            )} */}
+
+            {/* Live stats bar */}
+            {scores && round && (
+              <div className="bg-gray-900 border border-white/5 rounded-2xl p-4 mb-4 flex flex-col gap-3">
+                {/* Match header */}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <p className="text-white font-black text-sm">{round.fixture.Participant1}</p>
+                    <span className="text-gray-500 text-xs">vs</span>
+                    <p className="text-white font-black text-sm">{round.fixture.Participant2}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {scores.minute > 0 && (
+                      <span className="text-gray-400 text-xs">⏱️ {scores.minute}'</span>
+                    )}
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${isLive
+                        ? "bg-green-400/20 text-green-400"
+                        : isFinished
+                          ? "bg-blue-400/20 text-blue-400"
+                          : "bg-gray-800 text-gray-400"
+                      }`}>
+                      {isLive ? "🔴 Live" : isFinished ? "✓ Finished" : "Upcoming"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Score */}
+                <div className="flex justify-center items-center gap-4 py-2">
+                  <span className="text-4xl font-black text-white">{scores.participant1.Goals ?? 0}</span>
+                  <span className="text-gray-600 text-xl">—</span>
+                  <span className="text-4xl font-black text-white">{scores.participant2.Goals ?? 0}</span>
+                </div>
+
+                {/* Per team stats */}
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-white font-bold">{scores.participant1.Corners ?? 0}</span>
+                    <span className="text-gray-500">🚩 Corners</span>
+                    <span className="text-white font-bold">{scores.participant2.Corners ?? 0}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-white font-bold">{scores.participant1.YellowCards ?? 0}</span>
+                    <span className="text-gray-500">🟨 Yellow</span>
+                    <span className="text-white font-bold">{scores.participant2.YellowCards ?? 0}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-white font-bold">{scores.participant1.RedCards ?? 0}</span>
+                    <span className="text-gray-500">🟥 Red</span>
+                    <span className="text-white font-bold">{scores.participant2.RedCards ?? 0}</span>
+                  </div>
+                </div>
               </div>
             )}
 
