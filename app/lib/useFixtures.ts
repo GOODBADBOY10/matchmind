@@ -34,8 +34,13 @@ export function useFixtures() {
         const data = response.data;
         console.log("Fixtures response:", data);
         setFixtures(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch fixtures");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Failed to fetch fixtures";
+        // If token is invalid, clear auth so user can sign in again
+        if (msg.includes("403") || msg.includes("401")) {
+          useAppStore.getState().clearAuth();
+        }
+        setError(msg);
       } finally {
         setLoading(false);
       }
